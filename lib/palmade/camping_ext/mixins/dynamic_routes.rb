@@ -26,15 +26,14 @@ module Palmade::CampingExt
         def D_with_dynamic_routes(p, m, env)
           k, new_m, *a = D_without_dynamic_routes(p, m, env)
           if new_m == 'r404'
-            unless env['rack.rest_route.parsed'].nil?
-              actions = env['rack.rest_route.parsed']
+            unless (actions = env['rack.rest_route.parsed']).nil?
               unless actions.last.nil?
                 klass_name = Palmade::CampingExt::Inflector.camelize(actions.last)
               else
                 klass_name = "Index"
               end
             else
-              if p =~ /^\/?([^\/]+)/
+              if p =~ /^#{camping.path_prefix}\/?([^\/]+)/
                 klass_name = Palmade::CampingExt::Inflector.camelize($~[1])
               else
                 klass_name = "Index"
@@ -47,16 +46,25 @@ module Palmade::CampingExt
               controller_name = "#{controllers.name}::#{kname}"
               camping.logger.debug { "Trying Controller: #{controller_name}" }
 
-              # if we were able to load a class, let's try loading again
-              klass = eval(controller_name, TOPLEVEL_BINDING)
+              # if we were able to load a class, let's try loading
+              # again
+
+              klass = nil
+              if camping.production?
+                klass = eval(controller_name, TOPLEVEL_BINDING) rescue nil
+              else
+                klass = eval(controller_name, TOPLEVEL_BINDING)
+              end
+
               unless klass.nil?
                 controllers.add_route(klass)
                 k, new_m, *a = D_without_dynamic_routes(p, m, env)
               end
             end
 
-            # expected klass_name
-            unless klass_name =~ /[^A-Za-z0-9\:\_\-]/
+            # expected klass_name, -- by default, doesn't support
+            # class names with numbers on them.
+            unless klass_name =~ /[^A-Za-z\_]/
               unless controllers.const_defined?(klass_name)
                 try_loading.call(klass_name)
               end

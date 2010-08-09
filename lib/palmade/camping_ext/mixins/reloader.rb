@@ -48,7 +48,13 @@ module Palmade::CampingExt
             # let's remove already deleted constants from the route table
             controllers = me.const_get(:Controllers)
             controllers.r.delete_if do |k|
-              if k.respond_to?(:parent)
+              # anonymous classes, don't need to be reloaded, and no
+              # need to delete them. this is probably the Camping
+              # internal route Camping::Controllers::I, see line I =
+              # R(), I is an empty controller that maps to no URL.
+              if k.name.nil?
+                false
+              elsif k.respond_to?(:parent)
                 p = k.parent
                 nm = k.name.gsub("#{p.name}::", '')
                 p.const_defined?(nm) == false

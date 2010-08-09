@@ -80,7 +80,7 @@ module Palmade::CampingExt
             env["rack.rest_route.input"] = rest_input
             env["rack.rest_route.custom_method"] = custom_meth
 
-            #STDERR.puts "Parsed REST URL: #{env['PATH_INFO']} => #{actions.inspect}"
+            # STDERR.puts "Parsed REST URL: #{env['PATH_INFO']} => #{actions.inspect}"
           rescue RestRouteError => e
             @camping.logger.warn("RestRouteError: #{e.message}")
 

@@ -5,6 +5,7 @@ module Palmade
   module CampingExt
     autoload :Mixins, File.join(CAMPING_EXT_LIB_DIR, 'camping_ext/mixins')
     autoload :Inflector, File.join(CAMPING_EXT_LIB_DIR, 'camping_ext/inflector')
+    autoload :Grounds, File.join(CAMPING_EXT_LIB_DIR, 'camping_ext/grounds')
 
     DEFAULT_OPTIONS = {
       :parse_rest_routes => true
