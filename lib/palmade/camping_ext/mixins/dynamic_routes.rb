@@ -46,9 +46,6 @@ module Palmade::CampingExt
               controller_name = "#{controllers.name}::#{kname}"
               camping.logger.debug { "Trying Controller: #{controller_name}" }
 
-              # if we were able to load a class, let's try loading
-              # again
-
               klass = nil
               if camping.production?
                 klass = eval(controller_name, TOPLEVEL_BINDING) rescue nil

@@ -76,6 +76,7 @@ module Palmade::CampingExt
         def call(env)
           begin
             actions, rest_input, custom_meth = path_parser(Rack::Utils.unescape(env['PATH_INFO']), env["REQUEST_METHOD"].upcase)
+
             env["rack.rest_route.parsed"] = actions
             env["rack.rest_route.input"] = rest_input
             env["rack.rest_route.custom_method"] = custom_meth
@@ -101,7 +102,12 @@ module Palmade::CampingExt
           # this is a hack on REST urls, since i can't seem to find a way to
           # determine a head if a component is a resource id or a custom action
           # i'm using '!' here, could be different it this violates anything
-          # - markj
+          # - markjeee
+
+          # TODO: !!!!
+          # Might be a good idea to start supporting the way Rails
+          # support REST routes. Using the 'exclamation' mark here,
+          # don't look very nice.
           custom_meth = nil
           if !comps.last.nil? && comps.last.include?('!')
             comps[-1], custom_meth = comps.last.split('!', 2)
@@ -110,7 +116,7 @@ module Palmade::CampingExt
           # delete any component if empty
           comps.delete_if { |c| c.empty? }
 
-          #STDERR.puts "Parsing with: #{comps.inspect}; #{custom_meth}"
+          # STDERR.puts "Parsing with: #{comps.inspect}; #{custom_meth}"
 
           actions = [ ]
           rest_input = { }
@@ -132,6 +138,10 @@ module Palmade::CampingExt
                 state = :end
               when 'edit'
                 raise RestRouteError, "Invalid rest path, state :collection, but got :edit"
+              when /\A\_(.+)\Z/
+                actions += [ $~[1].to_sym, nil, collection ]
+                custom_meth = $~[1].to_sym
+                state = :end
               else
                 id = c
                 state = :show
@@ -142,6 +152,10 @@ module Palmade::CampingExt
                 raise RestRouteError, "Invalid rest path, state :show, but got :new"
               when 'edit'
                 actions += [ :edit, id, collection ]
+                state = :end
+              when /\A\_(.+)\Z/
+                actions += [ $~[1].to_sym, id, collection  ]
+                custom_meth = $~[1].to_sym
                 state = :end
               else
                 actions += [ :show, id, collection ]
@@ -184,6 +198,8 @@ module Palmade::CampingExt
               raise RestRouteError, "Invalid method for route #{path}, got #{method}"
             end
           end
+
+          # STDERR.puts "ACTIONS: #{actions.inspect}"
 
           [ actions, rest_input, custom_meth ]
         end
@@ -243,12 +259,12 @@ module Palmade::CampingExt
             meth = rr[-3]
             id = rr[-2]
 
-            if self.respond_to?(meth)
-              if id.nil?
-                logger.info("  Performing rest action: #{meth} on #{self.class.name}")
+            if self.public_methods(false).include?(meth)
+              if id.nil? || self.method(meth).arity == 0
+                logger.info { "  Performing rest action: #{meth} on #{self.class.name}" }
                 self.send(meth)
               else
-                logger.info("  Performing rest action: #{meth} for #{id} on #{self.class.name}")
+                logger.info { "  Performing rest action: #{meth} for #{id} on #{self.class.name}" }
                 self.send(meth, id)
               end
             else
@@ -292,11 +308,13 @@ module Palmade::CampingExt
                           "#{pp}#{nm}\!.+",
                           "#{pp}#{nm}/new",
                           "#{pp}#{nm}\/[^\/]+\/edit",
+                          "#{pp}#{nm}\/[^\/]+\/\_.+",
                           "#{pp}#{nm}\/[^\/]+",
                           "#{pp}.+\/#{nm}",
                           "#{pp}.+\/#{nm}\!.+",
                           "#{pp}.+\/#{nm}\/new",
                           "#{pp}.+\/#{nm}\/[^\/]+\/edit",
+                          "#{pp}.+\/#{nm}\/[^\/]+\/\_.+",
                           "#{pp}.+\/#{nm}\/[^\/]+"
                         ]
               end
