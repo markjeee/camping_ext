@@ -2,6 +2,40 @@ module Palmade::CampingExt
   module Mixins
     module Glue
       module Base
+        module ClassMethods
+          def included_chain(&block)
+            if block_given?
+              included_chain.push(block)
+            else
+              if defined?(@included_chain)
+                @included_chain
+              else
+                @included_chain = [ ]
+              end
+            end
+          end
+
+          def included(base)
+            class << base
+              attr_accessor :camping
+
+              def logger
+                if defined?(@logger)
+                  @logger
+                else
+                  # let's get it from the top-most module
+                  @logger = camping.logger
+                end
+              end
+            end
+            base.camping = camping
+
+            unless included_chain.empty?
+              included_chain.each { |ic| ic.call(base) }
+            end
+          end
+        end
+
         protected
 
         def logger
@@ -44,26 +78,10 @@ module Palmade::CampingExt
         base_controller = attach_camping.call(:Base)
 
         # attach base controller instance methods
-        base_controller.send(:include, Palmade::CampingExt::Mixins::Glue::Base)
+        base_controller.send(:include, Base)
 
         # extend the base controller instance methods
-        class << base_controller
-          def included(base)
-            class << base
-              attr_accessor :camping
-
-              def logger
-                if defined?(@logger)
-                  @logger
-                else
-                  # let's get it from the top-most module
-                  @logger = camping.logger
-                end
-              end
-            end
-            base.camping = camping
-          end
-        end
+        base_controller.extend(Base::ClassMethods)
       end
     end
   end

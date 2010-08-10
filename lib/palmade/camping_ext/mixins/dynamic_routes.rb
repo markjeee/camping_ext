@@ -15,10 +15,14 @@ module Palmade::CampingExt
           models = camping.const_get(:Models)
 
           # let's include the basic modules
-          k.send :include, base, helpers, models
+          unless k.include?(base)
+            k.send :include, base, helpers, models
+          end
 
           # let's include it in the list of routes
-          r.unshift(k) unless r.include?(k)
+          unless r.include?(k)
+            r.unshift(k)
+          end
 
           k
         end

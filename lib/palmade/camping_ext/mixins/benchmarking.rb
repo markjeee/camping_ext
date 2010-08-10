@@ -14,9 +14,7 @@ module Palmade::CampingExt
           log_message << path_n_method
           logger.info(log_message)
 
-          logger.debug do
-            "  Parameters: #{@input.inspect}"
-          end
+          logger.debug { "  Parameters: #{@input.inspect}" }
 
           rt = [ Benchmark.measure { ret = service_without_benchmarking(*a, &block) }.real, 0.0001 ].max
           ret
@@ -39,10 +37,12 @@ module Palmade::CampingExt
         require 'benchmark'
 
         base_controller = base.const_get(:Base)
-        base_controller.send(:include, Palmade::CampingExt::Mixins::Benchmarking::Base)
-        base_controller.module_eval do
-          alias :service_without_benchmarking :service
-          alias :service :service_with_benchmarking
+        base_controller.included_chain do |controller|
+          controller.send(:include, Base)
+          controller.class_eval do
+            alias :service_without_benchmarking :service
+            alias :service :service_with_benchmarking
+          end
         end
       end
     end
