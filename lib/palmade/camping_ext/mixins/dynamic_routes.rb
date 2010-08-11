@@ -48,7 +48,7 @@ module Palmade::CampingExt
 
             try_loading = lambda do |kname|
               controller_name = "#{controllers.name}::#{kname}"
-              camping.logger.debug { "Trying Controller: #{controller_name}" }
+              camping.logger.debug { "Trying Controller #{controller_name}" }
 
               klass = nil
               if camping.production?
