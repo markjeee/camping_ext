@@ -256,7 +256,7 @@ module Palmade::CampingExt
           logger.debug { "  Rest parameter: #{@rest_input.inspect}" }
 
           unless rr.nil?
-            meth = rr[-3]
+            meth = rr[-3].to_s
             id = rr[-2]
 
             if self.public_methods(false).include?(meth)
