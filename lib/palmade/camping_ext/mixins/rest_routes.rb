@@ -256,10 +256,17 @@ module Palmade::CampingExt
           logger.debug { "  Rest parameter: #{@rest_input.inspect}" }
 
           unless rr.nil?
-            meth = rr[-3].to_s
+            meth = rr[-3]
             id = rr[-2]
 
-            if self.public_methods(false).include?(meth)
+            pms = self.public_methods(false)
+            if pms.first.is_a?(String)
+              meth = meth.to_s
+            else
+              meth = meth.to_sym
+            end
+
+            if pms.include?(meth)
               if id.nil? || self.method(meth).arity == 0
                 logger.info { "  Performing rest action: #{meth} on #{self.class.name}" }
                 self.send(meth)
