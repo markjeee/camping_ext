@@ -45,6 +45,7 @@ module Palmade::CampingExt
             end
 
             controllers = camping.const_get(:Controllers)
+            base = camping.const_get(:Base)
 
             try_loading = lambda do |kname|
               controller_name = "#{controllers.name}::#{kname}"
@@ -66,9 +67,26 @@ module Palmade::CampingExt
             # expected klass_name, -- by default, doesn't support
             # class names with numbers on them.
             unless klass_name =~ /[^A-Za-z\_]/
-              unless controllers.const_defined?(klass_name)
-                try_loading.call(klass_name)
+              klass = nil
+
+              # this is an added measure, since i noticed sometimes,
+              # if there's another constant, a global for example,
+              # that has the same name, const_defined? will return
+              # true (i noticed this on ruby 1.9.2), even if it is not
+              # a camping controller. So the added check on
+              # repond_to?(:urls) and Base model included, is to make
+              # sure if the constant indeed is a camping
+              # controller. or probably just something
+              # else. Othwerise, we'll try to load it again, just in
+              # case. OORRRR, this could be a entirely wrong idea.
+              if controllers.const_defined?(klass_name)
+                klass = controllers.const_get(klass_name)
+                unless klass.nil?
+                  klass = nil unless klass.respond_to?(:urls) && klass.include?(base)
+                end
               end
+
+              try_loading.call(klass_name) if klass.nil?
             end
           end
 
