@@ -8,7 +8,8 @@ module Palmade
     autoload :Grounds, File.join(CAMPING_EXT_LIB_DIR, 'camping_ext/grounds')
 
     DEFAULT_OPTIONS = {
-      :parse_rest_routes => true
+      :parse_rest_routes => true,
+      :enforce_encoding => true
     }
 
     def self.init(mod, env, root, logger, options = { })
@@ -34,6 +35,11 @@ module Palmade
       # attach extension to routing Camping::Controllers::D
       mod.send(:include, Palmade::CampingExt::Mixins::DynamicRoutes)
 
+      # attach charset enforcer for rack.input data (only 1.9)
+      if options[:enforce_encoding] && "1.9".respond_to?(:encoding)
+        mod.send(:include, Palmade::CampingExt::Mixins::CharsetEncoding)
+      end
+
       # allows use of PUT and DELETE methods with POST
       mod.use Rack::MethodOverride
 
@@ -46,8 +52,8 @@ module Palmade
         mod.send(:include, Palmade::CampingExt::Mixins::Reloader)
       end
 
+      # attach extension to rest routing, Camping::Controllers::REST
       if options[:parse_rest_routes]
-        # attach extension to rest routing, Camping::Controllers::REST
         mod.send(:include, Palmade::CampingExt::Mixins::RestRoutes)
       end
 
