@@ -17,9 +17,14 @@ module Palmade::CampingExt
 
         def enforce_encoding(env)
           r = Rack::Request.new(env)
-          enc = Encoding.find(r.content_charset || @options[:charset_encoding])
+
+          http_enc = r.content_charset
+          enc = Encoding.find(http_enc || @options[:charset_encoding])
 
           unless enc.nil?
+            env['HTTP_CONTENT_CHARSET'] = http_enc
+            env['CONTENT_CHARSET'] = enc
+
             form_hash = r.POST
 
             # note, only values are being enforced for now. it looks
@@ -28,10 +33,6 @@ module Palmade::CampingExt
           end
 
           env
-        end
-
-        def change_encoding
-
         end
       end
 
