@@ -17,7 +17,7 @@ module Palmade::CampingExt
 
         def enforce_encoding(env)
           r = Rack::Request.new(env)
-          enc = Encoding.find(r.content_charset || @options['charset_encoding'])
+          enc = Encoding.find(r.content_charset || @options[:charset_encoding])
 
           unless enc.nil?
             form_hash = r.POST
